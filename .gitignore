@@ -1,0 +1,17 @@
+# dependencies
+node_modules/
+
+# dotenv environment variables file
+.env
+
+# logs
+logs
+*.log
+npm-debug.log*
+
+# coverage directory used by testing tools
+coverage/
+
+# build outputs
+dist/
+build/
