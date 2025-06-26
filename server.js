@@ -3,13 +3,20 @@ import cors from 'cors';
 import { MongoClient, ObjectId } from 'mongodb';
 import dotenv from 'dotenv';
 
-dotenv.config(); // Load .env vars
+// Load environment variables from .env
+dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 4000;
 const MONGO_URI = process.env.MONGO_URI;
 const DB_NAME = process.env.DB_NAME || 'testDB';
 const COLLECTION_NAME = 'participation';
+
+// Safety check for MONGO_URI
+if (!MONGO_URI) {
+  console.error("❌ MONGO_URI is not defined. Please check your .env file or environment variables.");
+  process.exit(1);
+}
 
 app.use(cors());
 app.use(express.json());
@@ -18,19 +25,22 @@ let db;
 let collection;
 
 async function connectDB() {
-  const client = new MongoClient(MONGO_URI, { useUnifiedTopology: true });
-  await client.connect();
-  db = client.db(DB_NAME);
-  collection = db.collection(COLLECTION_NAME);
-  console.log(`Connected to MongoDB at ${MONGO_URI}, DB: ${DB_NAME}`);
+  try {
+    const client = new MongoClient(MONGO_URI, { useUnifiedTopology: true });
+    await client.connect();
+    db = client.db(DB_NAME);
+    collection = db.collection(COLLECTION_NAME);
+    console.log(`✅ Connected to MongoDB at ${MONGO_URI}, DB: ${DB_NAME}`);
+  } catch (err) {
+    console.error('❌ Failed to connect to MongoDB:', err);
+    process.exit(1);
+  }
 }
 
-connectDB().catch((err) => {
-  console.error('Failed to connect to MongoDB:', err);
-  process.exit(1);
-});
+// Connect to MongoDB
+connectDB();
 
-// CRUD routes here (same as before)...
+// Routes
 
 app.post('/entries', async (req, res) => {
   try {
@@ -115,6 +125,7 @@ app.delete('/entries/:id', async (req, res) => {
   }
 });
 
+// Start server
 app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+  console.log(`🚀 Server running on port ${PORT}`);
 });
