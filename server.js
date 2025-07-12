@@ -24,7 +24,7 @@ app.use(cors());
 app.use(express.json());
 
 app.use(cors({
-  origin: 'https://dev-hubs-iq0k0m3xi-shavuparmars-projects.vercel.app',
+  origin: 'https://dev-hubs.vercel.app',
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   credentials: true
 }));
