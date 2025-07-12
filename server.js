@@ -23,6 +23,12 @@ const COLLECTION_NAME = 'participation';
 app.use(cors());
 app.use(express.json());
 
+app.use(cors({
+  origin: 'https://dev-hubs-iq0k0m3xi-shavuparmars-projects.vercel.app',
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  credentials: true
+}));
+
 // MongoClient connection for participation collection
 let db;
 let collection;
