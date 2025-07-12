@@ -8,4 +8,3 @@ const ForumEntrySchema = new mongoose.Schema({
 });
 
 module.exports = mongoose.model('ForumEntry', ForumEntrySchema);
-forum.js
