@@ -48,10 +48,8 @@ connectMongoClient().catch((err) => {
 
 // Mongoose connection for User auth
 mongoose
-  .connect(MONGO_URI, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-  })
+ mongoose
+  .connect(MONGO_URI)
   .then(() => console.log('✅ Mongoose connected'))
   .catch((err) => {
     console.error('❌ Mongoose connection error:', err);
