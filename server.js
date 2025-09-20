@@ -5,6 +5,11 @@ import mongoose from 'mongoose';
 import { MongoClient, ObjectId } from 'mongodb';
 import User from './models/User.js';
 
+
+
+
+
+
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import Project from './models/Projects.js';
@@ -19,15 +24,28 @@ const MONGO_URI = process.env.MONGO_URI;
 const DB_NAME = process.env.DB_NAME || 'testDB';
 const COLLECTION_NAME = 'participation';
 
+
+
+
+const allowedOrigins = ['http://localhost:5173', 'https://dev-hubs.vercel.app'];
 // Middleware
 app.use(cors());
 app.use(express.json());
 
-app.use(cors({
-  origin: 'https://dev-hubs.vercel.app',
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  credentials: true
-}));
+
+app.use(
+  cors({
+    origin: function (origin, callback) {
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error('Not allowed by CORS'));
+      }
+    },
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    credentials: true,
+  })
+);
 
 // MongoClient connection for participation collection
 let db;
@@ -48,7 +66,7 @@ connectMongoClient().catch((err) => {
 
 // Mongoose connection for User auth
 mongoose
- mongoose
+mongoose
   .connect(MONGO_URI)
   .then(() => console.log('✅ Mongoose connected'))
   .catch((err) => {
@@ -220,14 +238,12 @@ app.post('/api/login', async (req, res) => {
   }
 });
 
-app.listen(PORT, () => {
-  console.log(`🚀 Server running on http://localhost:${PORT}`);
-});
+
 
 // Profile routes
 app.post('/api/profile', async (req, res) => {
   try {
-    const { userId, avatar, bio, posts, followers, following } = req.body;
+    const { userId, avatar = '', bio = '', posts = [], followers = [], following = [] } = req.body;
 
     if (!userId) return res.status(400).json({ error: 'User ID is required' });
 
@@ -282,7 +298,7 @@ app.post('/api/project-submissions', async (req, res) => {
       description,
       projectLink,
       techStack,
-   
+
     });
 
     const savedProject = await newProject.save();
@@ -335,3 +351,76 @@ app.delete('/api/users/:id', async (req, res) => {
     res.status(500).json({ error: 'Internal Server Error' });
   }
 });
+
+app.post("/api/chat", async (req, res) => {
+  try {
+    const { message, history } = req.body;
+
+    if (!message) {
+      return res.status(400).json({ error: "Message is required" });
+    }
+
+    // Build conversation with history
+    const contents = [
+      ...(history || []).map((m) => ({
+        role: m.role,
+        parts: [{ text: m.content }],
+      })),
+      { role: "user", parts: [{ text: message }] },
+    ];
+
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ contents }),
+      }
+    );
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      console.error("Gemini API Error:", data);
+      return res
+        .status(500)
+        .json({ error: data.error?.message || "Failed to get response" });
+    }
+
+    const reply = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
+
+    res.json({
+      reply,
+      history: [...(history || []), { role: "user", content: message }, { role: "model", content: reply }],
+    });
+  } catch (error) {
+    console.error("Chatbot API Error:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
+
+
+// DELETE /users/:id
+app.delete('/users/:id', async (req, res) => {
+  const userId = req.params.id;
+
+  try {
+    // Assuming you have a User model with a delete method, e.g., Mongoose or any DB
+    const deletedUser = await User.findByIdAndDelete(userId);
+
+    if (!deletedUser) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    res.status(200).json({ message: 'User deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting user:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+
+app.listen(PORT, () => { console.log(`🚀 Server running on http://localhost:${PORT}`); });
+
+
